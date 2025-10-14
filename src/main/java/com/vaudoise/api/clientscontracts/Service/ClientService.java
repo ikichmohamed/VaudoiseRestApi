@@ -1,6 +1,7 @@
 package com.vaudoise.api.clientscontracts.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,6 +60,21 @@ public class ClientService {
 		this.contractRepository.saveAll(contracts);
 		//suppression du client
 		this.clientRepository.deleteById(id);
+	}
+	
+	public List<Contract> getActiveContracts(long idClient) {
+	      List<Contract> activecontracts = this.contractRepository.findByClientIdAndEndDateAfterOrEndDateIsNull(idClient, LocalDate.now());
+	      return activecontracts;
+	}
+	
+	public List<Contract> getActiveContractsFilteredByUpdatedDate(long idClient, LocalDate updatedDate) {
+		List<Contract> filteredactivecontracts = this.contractRepository.findByClientIdAndUpdateDateAfter(idClient, updatedDate);
+		return filteredactivecontracts;
+	}
+	
+	public double getActiveContractsTotal(long idClient) {
+		List<Contract> activecontracts = this.contractRepository.findByClientIdAndUpdateDateAfter(idClient, LocalDate.now());
+		return activecontracts.stream().mapToDouble(Contract::getCostAmount).sum();
 	}
 	
 	

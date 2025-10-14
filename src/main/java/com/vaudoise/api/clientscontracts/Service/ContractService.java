@@ -1,6 +1,7 @@
 package com.vaudoise.api.clientscontracts.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,13 @@ public class ContractService {
 			contract.setStartDate(LocalDate.now());
 		}
 		contract.setClient(client);
+		return this.contractRepository.save(contract);
+	}
+	
+	public Contract updateCost(long idContract, double updatedCost) {
+		Contract contract = this.contractRepository.findById(idContract).orElseThrow(()-> new RuntimeException("Contract Not found"));
+		contract.setCostAmount(updatedCost);
+		contract.setLastUpdateDate(LocalDateTime.now());
 		return this.contractRepository.save(contract);
 	}
 
