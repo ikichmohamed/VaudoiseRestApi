@@ -38,5 +38,19 @@ public abstract class Client {
     private List<Contract> contracts = new ArrayList<>(); 
     // Initialisation de la liste pour éviter les NullPointerException
     
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public List<Contract> getContracts() { return contracts; }
+    public void setContracts(List<Contract> contracts) { this.contracts = contracts; }
 }
 
