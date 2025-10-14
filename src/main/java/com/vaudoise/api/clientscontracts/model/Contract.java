@@ -39,5 +39,23 @@ public class Contract {
     public void onUpdate() {
         updateDate = LocalDateTime.now(); // On met à jour la date de modification à chaque update
     }
+    
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Client getClient() { return client; }
+    public void setClient(Client client) { this.client = client; }
+
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+
+    public Double getCostAmount() { return costAmount; }
+    public void setCostAmount(Double costAmount) { this.costAmount = costAmount; }
+
+    public LocalDateTime getLastUpdateDate() { return updateDate; }
+    public void setLastUpdateDate(LocalDateTime lastUpdateDate) { this.updateDate = lastUpdateDate; }
 }
 
