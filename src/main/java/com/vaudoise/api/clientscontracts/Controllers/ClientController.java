@@ -2,6 +2,8 @@ package com.vaudoise.api.clientscontracts.Controllers;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,6 +46,13 @@ public class ClientController {
         return ResponseEntity.ok(responseDto);
 
     	
+    }
+    
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<ClientDto> getClient(@PathVariable("id") String idClient) {
+    	Client client = this.clientService.getClient(Integer.parseInt(idClient)).orElseThrow(()-> new RuntimeException("Client not found"));
+    	ClientDto responseDto = modelMapper.map(client, ClientDto.class);
+    	return ResponseEntity.ok(responseDto);
     }
 
 
