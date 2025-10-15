@@ -35,5 +35,10 @@ curl -X POST http://localhost:8080/api/clients \
   "phone": "0600000000",
   "birthDate": "2000-12-05"
 }'
+```
 
-## 🧪 Resultat du test
+
+# 📸 Captures d’écran
+
+## 1. Commande curl pour créer un client
+![curl command result](./screenshots/CurlPostCreateClient.png)
