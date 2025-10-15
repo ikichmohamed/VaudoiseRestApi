@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.vaudoise.api.clientscontracts.Service.ClientService;
 import com.vaudoise.api.clientscontracts.dto.ClientDto;
 import com.vaudoise.api.clientscontracts.model.Client;
+import com.vaudoise.api.clientscontracts.model.Company;
+import com.vaudoise.api.clientscontracts.model.Person;
 
 
 @RestController
@@ -26,9 +28,21 @@ public class ClientController {
     
     @PostMapping
     public ResponseEntity<ClientDto> createClient(@RequestBody ClientDto clientDto) {
-    	Client client = this.modelMapper.map(clientDto,Client.class);
-    	Client savedClient = this.clientService.createClient(client);
-    	return ResponseEntity.ok(modelMapper.map(savedClient,ClientDto.class));
+    	Client client;
+
+        if ("PERSON".equalsIgnoreCase(clientDto.getClientType())) {
+            client = modelMapper.map(clientDto, Person.class);
+        } else if ("COMPANY".equalsIgnoreCase(clientDto.getClientType())) {
+            client = modelMapper.map(clientDto, Company.class);
+        } else {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        Client savedClient = clientService.createClient(client);
+        ClientDto responseDto = modelMapper.map(savedClient, ClientDto.class);
+
+        return ResponseEntity.ok(responseDto);
+
     	
     }
 
