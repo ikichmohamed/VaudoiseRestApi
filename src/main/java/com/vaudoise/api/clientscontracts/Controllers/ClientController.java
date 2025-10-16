@@ -1,7 +1,10 @@
 package com.vaudoise.api.clientscontracts.Controllers;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.vaudoise.api.clientscontracts.Service.ClientService;
 import com.vaudoise.api.clientscontracts.dto.ClientDto;
+import com.vaudoise.api.clientscontracts.dto.ContractDto;
 import com.vaudoise.api.clientscontracts.model.Client;
 import com.vaudoise.api.clientscontracts.model.Company;
+import com.vaudoise.api.clientscontracts.model.Contract;
 import com.vaudoise.api.clientscontracts.model.Person;
 
 
@@ -94,6 +99,30 @@ public class ClientController {
         }
 
     }
+    
+ // =========================================================
+    // ✅ GET : Récupérer les contrats actifs d’un client
+    // =========================================================
+    @GetMapping("/{id}/contracts/active")
+    public ResponseEntity<?> getActiveContracts(@PathVariable("id") long idClient) {
+    	try {
+            if (clientService.getClient(idClient).isEmpty()) {
+                return ResponseEntity.status(404).body("Client not found");
+            }
+
+            List<Contract> activeContracts = clientService.getActiveContracts(idClient);
+
+            if (activeContracts.isEmpty()) {
+                return ResponseEntity.ok(Collections.emptyList());
+            }
+
+            return ResponseEntity.ok(activeContracts);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+
 
 
 }

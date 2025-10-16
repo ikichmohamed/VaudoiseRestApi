@@ -6,6 +6,7 @@ import com.vaudoise.api.clientscontracts.dto.ClientDto;
 import com.vaudoise.api.clientscontracts.dto.ContractDto;
 import com.vaudoise.api.clientscontracts.model.Client;
 import com.vaudoise.api.clientscontracts.model.Company;
+import com.vaudoise.api.clientscontracts.model.Contract;
 import com.vaudoise.api.clientscontracts.model.Person;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +19,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -286,5 +288,72 @@ class ClientControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(clientService, never()).updateClient(anyLong(), any(Client.class));
+    }
+    
+    @Test
+    @DisplayName("✅ doit retourner la liste des contrats actifs d’un client existant")
+    void testGetActiveContracts_Success() throws Exception {
+        long clientId = 1L;
+
+        Contract contract1 = new Contract();
+        contract1.setId(100L);
+        contract1.setCostAmount(2500.0);
+
+        Contract contract2 = new Contract();
+        contract2.setId(101L);
+        contract2.setCostAmount(3200.0);
+
+        when(clientService.getClient(clientId)).thenReturn(Optional.of(new Person()));
+        when(clientService.getActiveContracts(clientId)).thenReturn(List.of(contract1, contract2));
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/active", clientId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(100))
+                .andExpect(jsonPath("$[1].id").value(101));
+
+        verify(clientService, times(1)).getActiveContracts(clientId);
+    }
+
+    @Test
+    @DisplayName("✅ doit retourner une liste vide si le client n’a aucun contrat actif")
+    void testGetActiveContracts_EmptyList() throws Exception {
+        long clientId = 2L;
+
+        when(clientService.getClient(clientId)).thenReturn(Optional.of(new Person()));
+        when(clientService.getActiveContracts(clientId)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/active", clientId))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+
+        verify(clientService, times(1)).getActiveContracts(clientId);
+    }
+
+    @Test
+    @DisplayName("❌ doit retourner 404 si le client n’existe pas")
+    void testGetActiveContracts_ClientNotFound() throws Exception {
+        long clientId = 999L;
+
+        when(clientService.getClient(clientId)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/active", clientId))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Client not found"));
+
+        verify(clientService, never()).getActiveContracts(anyLong());
+    }
+
+    @Test
+    @DisplayName("❌ doit retourner 500 si une erreur interne survient")
+    void testGetActiveContracts_InternalError() throws Exception {
+        long clientId = 3L;
+
+        when(clientService.getClient(clientId)).thenReturn(Optional.of(new Person()));
+        when(clientService.getActiveContracts(clientId)).thenThrow(new RuntimeException("Unexpected DB error"));
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/active", clientId))
+                .andExpect(status().isInternalServerError());
+
+        verify(clientService, times(1)).getActiveContracts(clientId);
     }
 }
