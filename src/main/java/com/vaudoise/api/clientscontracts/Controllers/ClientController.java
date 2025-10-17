@@ -110,7 +110,7 @@ public class ClientController {
     
  // 🔥 DELETE client
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteClient(@PathVariable long id) {
+    public ResponseEntity<?> deleteClient(@PathVariable("id") long id) {
     	try {
             List<Contract> updatedContracts = clientService.deleteClient(id);
             return ResponseEntity.ok(Map.of(
