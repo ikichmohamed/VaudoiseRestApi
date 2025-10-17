@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,6 +40,23 @@ public class ContractController {
     	catch (RuntimeException e) {
     		if (e.getMessage().contains("Client not found")) {
     			return ResponseEntity.status(404).body(Map.of("message", "Client not found"));
+    		}
+    		else {
+    			return ResponseEntity.internalServerError().body(Map.of("message", "Internal error: Unexpected error"));
+    		}
+    	}
+    }
+    
+    @PutMapping("/{id}/updatecost")
+    public ResponseEntity<?> updateCost(@PathVariable("id") long idContract, @RequestBody double updatedCost) {
+    	try {
+    		Contract updatedContract = this.contractService.updateCost(idContract, updatedCost);
+    		return ResponseEntity.ok(updatedContract);
+    		
+    	}
+    	catch (RuntimeException e) {
+    		if (e.getMessage().contains("Contract not found")) {
+    			return ResponseEntity.status(404).body(Map.of("message", "Contract not found"));
     		}
     		else {
     			return ResponseEntity.internalServerError().body(Map.of("message", "Internal error: Unexpected error"));
