@@ -48,7 +48,7 @@ public class ClientService {
 				).orElseThrow(() -> new RuntimeException("Client Not found")) ;
 	}
 	
-	public void deleteClient(long id) {
+	public List<Contract> deleteClient(long id) {
 		// extraire les contrats dun client par id
 		List<Contract> contracts = this.contractRepository.findByClientIdAndEndDateAfterOrEndDateIsNull(id, LocalDate.now());
 		
@@ -57,9 +57,10 @@ public class ClientService {
 			c.setEndDate(LocalDate.now());
 		}
 		//maJ dans le repo
-		this.contractRepository.saveAll(contracts);
+		List<Contract> savedcontracts = this.contractRepository.saveAll(contracts);
 		//suppression du client
 		this.clientRepository.deleteById(id);
+		return savedcontracts;
 	}
 	
 	public List<Contract> getActiveContracts(long idClient) {

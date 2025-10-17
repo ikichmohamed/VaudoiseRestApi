@@ -62,12 +62,16 @@ class ContractControllerTest {
     private Person personEntity;
     private ContractDto contractDto;
     private ClientDto personDto;
+    private Contract contractUp;
 
     @BeforeEach
     void setUp() {
         // Entity
         contractEntity = new Contract();
         contractEntity.setId(1L);
+        
+        contractUp = new Contract();
+        contractUp.setId(1L);
         
         personEntity = new Person();
         personEntity.setId(1L);
@@ -163,71 +167,62 @@ class ContractControllerTest {
                 .andExpect(jsonPath("$.message").value("Internal error: Unexpected error"));
     }
     
+ // ✅ SUCCESS CASE
     @Test
-    @DisplayName("✅ updateCost - contrat existante et doit mettre a jour son cost avec succès (200)")
+    @DisplayName("✅ PUT /api/contracts/{id}/updateCost - success (200)")
     void updateCost_Success() throws Exception {
-    	
-        
         long contractId = 10L;
         double updatedCost = 2000.0;
-        String updatedCostStr = "2000";
 
-        Contract contract = new Contract();
-        contract.setId(10L);
-        contract.setCostAmount(1000.0);
-        contract.setStartDate(LocalDate.of(2025, 1, 1));
+        Contract updatedContract = new Contract();
+        updatedContract.setId(contractId);
+        updatedContract.setCostAmount(updatedCost);
+        updatedContract.setStartDate(LocalDate.of(2025, 1, 1));
 
         when(contractService.updateCost(eq(contractId), eq(updatedCost)))
-        .thenReturn(contract);
+                .thenReturn(updatedContract);
 
         mockMvc.perform(put("/api/contracts/{id}/updateCost", contractId)
-        .param("updatedCost", updatedCostStr)
-        .contentType(MediaType.APPLICATION_JSON))     
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.id").value(10))
-        .andExpect(jsonPath("$.costAmount").value(2000.0))
-        .andExpect(jsonPath("$.startDate").value("2025-01-01"));
+                        .param("updatedCost", "2000")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.costAmount").value(2000.0))
+                .andExpect(jsonPath("$.startDate").value("2025-01-01"));
+
+        verify(contractService).updateCost(contractId, updatedCost);
     }
 
-
- // ==========================
-    // ✅ TEST 1 — Client trouvé
-    // ==========================
+    // ❌ CONTRACT NOT FOUND
     @Test
-    @DisplayName("✅ updateCost - contrat inexistant erreur (404)")
+    @DisplayName("❌ PUT /api/contracts/{id}/updateCost - contract not found (404)")
     void updateCost_ContractNotFound() throws Exception {
-    	
         long contractId = 999L;
-        String updatedCostStr = "2000";
+        double updatedCost = 2000.0;
 
-        
+        when(contractService.updateCost(eq(contractId), eq(updatedCost)))
+                .thenReturn(null);
 
-        when(contractService.createContract(eq(contractId), any(Contract.class)))
-        .thenThrow(new RuntimeException("Contract not found"));
-       
-        mockMvc.perform(post("/api/contracts/{id}/updateCost", contractId)
-        		.param("updatedCost", updatedCostStr)
-        .contentType(MediaType.APPLICATION_JSON))
-        .andDo(print()) // ✅ affiche dans les logs la requête et la réponse
-        .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.message").value("Contract not found"));
-        
+        mockMvc.perform(put("/api/contracts/{id}/updateCost", contractId)
+                        .param("updatedCost", "2000")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Contract not found"));
     }
-    
+
+    // 💥 INTERNAL SERVER ERROR
     @Test
-    @DisplayName("💥 updateCost - doit renvoyer 500 en cas d'erreur interne")
+    @DisplayName("💥 PUT /api/contracts/{id}/updateCost - internal server error (500)")
     void updateCost_InternalServerError() throws Exception {
         long contractId = 10L;
-        String updatedCostStr = "2000";
-        
+        double updatedCost = 2000.0;
 
-        when(contractService.createContract(eq(contractId), any(Contract.class)))
+        when(contractService.updateCost(eq(contractId), eq(updatedCost)))
                 .thenThrow(new RuntimeException("Unexpected error"));
 
-        mockMvc.perform(post("/api/contracts/{id}/updateCost", contractId)
-        		.param("updatedCost", updatedCostStr)
-                .contentType(MediaType.APPLICATION_JSON))
-                
+        mockMvc.perform(put("/api/contracts/{id}/updateCost", contractId)
+                        .param("updatedCost", "2000")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message").value("Internal error: Unexpected error"));
     }

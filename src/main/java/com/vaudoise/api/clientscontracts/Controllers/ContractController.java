@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vaudoise.api.clientscontracts.Service.ContractService;
@@ -47,21 +48,21 @@ public class ContractController {
     	}
     }
     
-    @PutMapping("/{id}/updatecost")
-    public ResponseEntity<?> updateCost(@PathVariable("id") long idContract, @RequestBody double updatedCost) {
-    	try {
-    		Contract updatedContract = this.contractService.updateCost(idContract, updatedCost);
-    		return ResponseEntity.ok(updatedContract);
-    		
-    	}
-    	catch (RuntimeException e) {
-    		if (e.getMessage().contains("Contract not found")) {
-    			return ResponseEntity.status(404).body(Map.of("message", "Contract not found"));
-    		}
-    		else {
-    			return ResponseEntity.internalServerError().body(Map.of("message", "Internal error: Unexpected error"));
-    		}
-    	}
+    @PutMapping("/{id}/updateCost")
+    public ResponseEntity<?> updateCost(
+            @PathVariable("id") long id,
+            @RequestParam("updatedCost") double updatedCost) {
+        try {
+            Contract updatedContract = contractService.updateCost(id, updatedCost);
+            if (updatedContract == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Contract not found"));
+            }
+            return ResponseEntity.ok(updatedContract);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Internal error: " + e.getMessage()));
+        }
     }
 
 }

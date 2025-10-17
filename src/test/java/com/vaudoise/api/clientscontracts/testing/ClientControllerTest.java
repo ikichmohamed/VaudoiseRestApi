@@ -21,8 +21,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -30,13 +32,17 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ClientController.class)
@@ -53,6 +59,9 @@ class ClientControllerTest {
 
     private Person personEntity;
     private ClientDto personDto;
+    private List<Contract> activeContracts;
+    private Contract contract1;
+    private Contract contract2;
 
     @BeforeEach
     void setUp() {
@@ -72,6 +81,19 @@ class ClientControllerTest {
         personDto.setClientType("PERSON");
         personDto.setBirthdate("1998-05-17");
         personDto.setContracts(List.of());
+        
+     // 📜 Create active contracts for this client (no end date yet)
+        contract1 = new Contract();
+        contract1.setId(10L);
+        contract1.setStartDate(LocalDate.of(2024, 1, 1));
+        contract1.setEndDate(null);
+        
+
+        contract2 = new Contract();
+        contract2.setId(11L);
+        contract2.setStartDate(LocalDate.of(2024, 3, 10));
+        contract2.setEndDate(null);
+        
     }
 
     // ==========================
@@ -292,6 +314,55 @@ class ClientControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(clientService, never()).updateClient(anyLong(), any(Client.class));
+    }
+    
+ // ✅ CAS 1 : Suppression réussie (client trouvé, contrats mis à jour)
+    @Test
+    @DisplayName("✅ DELETE /api/clients/{id} - should return 200 and update contracts endDate when client deleted successfully")
+    void deleteClient_Success() throws Exception {
+        long clientId = 1L;
+
+        // On simule la mise à jour des contrats avec endDate = today
+        List<Contract> originContracts = List.of(contract1, contract2);
+        personEntity.setContracts(originContracts);
+        contract1.setEndDate(LocalDate.now());
+        contract2.setEndDate(LocalDate.now());
+        List<Contract> updatedContracts = List.of(contract1, contract2);
+        
+
+        when(clientService.deleteClient(clientId)).thenReturn(updatedContracts);
+
+        mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/api/clients/delete/{id}", clientId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print()) // affichage du résultat HTTP
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Client deleted successfully"))
+                .andExpect(jsonPath("$.contractsUpdated").value(2));
+
+        verify(clientService, times(1)).deleteClient(clientId);
+    }
+
+    @Test
+    @DisplayName("❌ DELETE /api/clients/{id} - should return 404 when client does not exist")
+    void deleteClient_NotFound() throws Exception {
+        long clientId = 999L;
+        doThrow(new EntityNotFoundException("Client not found")).when(clientService).deleteClient(clientId);
+
+        mockMvc.perform(delete("/api/clients/delete/{id}", clientId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("⚠️ DELETE /api/clients/{id} - should return 500 when internal error occurs")
+    void deleteClient_InternalError() throws Exception {
+        long clientId = 5L;
+        doThrow(new IllegalStateException("Unexpected error")).when(clientService).deleteClient(clientId);
+
+        mockMvc.perform(delete("/api/clients/delete/{id}", clientId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError());
     }
     
     @Test

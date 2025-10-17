@@ -12,6 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -105,6 +106,25 @@ public class ClientController {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
 
+    }
+    
+ // 🔥 DELETE client
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> deleteClient(@PathVariable long id) {
+    	try {
+            List<Contract> updatedContracts = clientService.deleteClient(id);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Client deleted successfully",
+                    "contractsUpdated", updatedContracts.size()
+            ));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Client not found"));
+        } catch (Exception e) {
+            // Autre erreur interne
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Internal error: Unexpected error"));
+        }
     }
     
  // =========================================================
