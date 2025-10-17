@@ -1,8 +1,4 @@
-Parfait 🙌 Voici ton texte **mis en forme proprement en Markdown**, prêt à être collé tel quel dans ton `README.md` :
 
----
-
-````markdown
 # 🧠 Test Technique – Gestion des Clients et Contrats
 
 ## 📘 Contexte
@@ -16,7 +12,7 @@ L’application permet notamment de :
 - Calculer le coût total des contrats actifs d’un client  
 - Clôturer automatiquement les contrats lors de la suppression d’un client  
 
----
+
 
 ## 🧩 Architecture du projet
 
@@ -31,7 +27,7 @@ Le projet suit une architecture en couches claire et modulaire :
 | **DTO & Mapper** | Conversion entre les entités et objets exposés via **ModelMapper** |
 | **Test** | Ensemble de tests unitaires et MockMvc pour valider les comportements REST |
 
----
+
 
 ## ⚙️ Installation et exécution
 
@@ -41,7 +37,7 @@ Le projet suit une architecture en couches claire et modulaire :
 - **Gradle** ou **Maven**  
 - Un IDE compatible : *Eclipse*, *IntelliJ IDEA* ou *VS Code*  
 
----
+
 
 ### 🚀 Étapes d’installation
 
@@ -133,15 +129,7 @@ curl -X DELETE http://localhost:8080/api/clients/1
   * `404 Not Found` → ressource inexistante
   * `500 Internal Server Error` → erreur interne
 
----
 
-## 📸 Captures d’écran
-
-1️⃣ Commande **cURL** pour créer un client
-2️⃣ Exemple de **rapport de tests**
-→ *(fichier : build/reports/tests/test/index.html)*
-
----
 
 ## 👨‍💻 Auteur
 
@@ -153,9 +141,3 @@ Solution Engineer chez Bizzdesign
 📧 [ikich.mohamed.mpsi@gmail.com](mailto:ikich.mohamed.mpsi@gmail.com)
 🌐 [LinkedIn](https://www.linkedin.com/in/mohamed-ikich-2b285b1b4)
 
-```
-
----
-
-Souhaites-tu que je t’ajoute à la fin une section “📚 Stack Technique et Outils utilisés” (Spring Boot, JPA, Lombok, H2, etc.) pour le rendre encore plus complet ?
-```
