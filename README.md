@@ -43,7 +43,7 @@ Le projet suit une architecture en couches claire et modulaire :
 
 #### 1️⃣ Cloner le projet
 ```bash
-git clone https://github.com/ikichmohamed/VaudoiseRestApiClientsContracts.git
+git clone https://github.com/ikichmohamed/VaudoiseRestApi.git
 cd VaudoiseRestApiClientsContracts
 ````
 
