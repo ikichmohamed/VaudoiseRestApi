@@ -1,12 +1,16 @@
 package com.vaudoise.api.clientscontracts.Controllers;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.vaudoise.api.clientscontracts.Service.ClientService;
@@ -23,6 +28,8 @@ import com.vaudoise.api.clientscontracts.model.Client;
 import com.vaudoise.api.clientscontracts.model.Company;
 import com.vaudoise.api.clientscontracts.model.Contract;
 import com.vaudoise.api.clientscontracts.model.Person;
+
+import jakarta.persistence.EntityNotFoundException;
 
 
 @RestController
@@ -120,6 +127,54 @@ public class ClientController {
 
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Internal server error: " + e.getMessage());
+        }
+    }
+    
+    @GetMapping("/{id}/contracts/filteredactive")
+    public ResponseEntity<?> getActiveContractsFilteredByUpdatedDate(
+            @PathVariable long id,
+            @RequestParam("updatedDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate updatedDate) {
+
+        try {
+            List<Contract> contracts = clientService.getActiveContractsFilteredByUpdatedDate(id, updatedDate);
+            return ResponseEntity.ok(contracts);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Invalid parameters"));
+        }
+    }
+    
+    @GetMapping("/{id}/contracts/active/total")
+    public ResponseEntity<?> getActiveContractsTotal(
+            @PathVariable long id) {
+
+        try {
+            var optClient = clientService.getClient(id);
+            
+            if (optClient.isEmpty()) {
+            	return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Client not found"));
+            }
+            double TotalCost = clientService.getActiveContractsTotal(id);
+            
+            return ResponseEntity.ok(Map.of("clientId", id,
+                    "totalActiveContractsCost", TotalCost));
+            
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Invalid parameters"));
         }
     }
 

@@ -8,6 +8,9 @@ import com.vaudoise.api.clientscontracts.model.Client;
 import com.vaudoise.api.clientscontracts.model.Company;
 import com.vaudoise.api.clientscontracts.model.Contract;
 import com.vaudoise.api.clientscontracts.model.Person;
+
+import jakarta.persistence.EntityNotFoundException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +22,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -356,4 +360,154 @@ class ClientControllerTest {
 
         verify(clientService, times(1)).getActiveContracts(clientId);
     }
+    @Test
+    @DisplayName("✅ Should return active contracts updated after given date for existing client")
+    void testGetActiveContractsFilteredByUpdatedDate_Success() throws Exception {
+        long clientId = 1L;
+        LocalDate filterDate = LocalDate.of(2024, 1, 1);
+
+        // Création de contrats fictifs
+        Contract activeRecentContract = new Contract();
+        activeRecentContract.setId(10L);
+        
+
+        Contract oldContract = new Contract();
+        oldContract.setId(11L);
+        
+
+        Contract inactiveContract = new Contract();
+        inactiveContract.setId(12L);
+        
+
+        // Attacher les contrats au client
+        Person client = new Person();
+        client.setId(clientId);
+        client.setName("Client Test");
+        client.setContracts(List.of(activeRecentContract, oldContract, inactiveContract));
+
+        // Seul activeRecentContract doit passer le filtre
+        List<Contract> expectedContracts = List.of(activeRecentContract);
+
+        when(clientService.getActiveContractsFilteredByUpdatedDate(clientId, filterDate))
+                .thenReturn(expectedContracts);
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/filteredactive", clientId)
+                        .param("updatedDate", filterDate.toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(10L));
+    }
+
+    @Test
+    @DisplayName("❌ Should return 404 when trying to get contracts for non-existent client")
+    void testGetActiveContractsFilteredByUpdatedDate_ClientNotFound() throws Exception {
+        long clientId = 99L;
+        LocalDate filterDate = LocalDate.of(2024, 1, 1);
+
+        when(clientService.getActiveContractsFilteredByUpdatedDate(clientId, filterDate))
+                .thenThrow(new EntityNotFoundException("Client not found"));
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/filteredactive", clientId)
+                        .param("updatedDate", filterDate.toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Client not found"));
+    }
+
+    @Test
+    @DisplayName("⚠️ Should return 400 when updatedDate is missing or invalid")
+    void testGetActiveContractsFilteredByUpdatedDate_MissingOrInvalidDate() throws Exception {
+        long clientId = 1L;
+
+        // Missing date
+        mockMvc.perform(get("/api/clients/{id}/contracts/filteredactive", clientId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        // Invalid date format
+        mockMvc.perform(get("/api/clients/{id}/contracts/filteredactive", clientId)
+                        .param("updatedDate", "invalid-date")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("⚠️ Should return 500 when unexpected error occurs in service")
+    void testGetActiveContractsFilteredByUpdatedDate_InternalServerError() throws Exception {
+        long clientId = 1L;
+        LocalDate filterDate = LocalDate.of(2024, 1, 1);
+
+        when(clientService.getActiveContractsFilteredByUpdatedDate(clientId, filterDate))
+                .thenThrow(new RuntimeException("Unexpected error"));
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/filteredactive", clientId)
+                        .param("updatedDate", filterDate.toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value("Unexpected error"));
+    }
+    
+    @Test
+    @DisplayName("✅ doit retourner le total des contrats actifs si le client existe")
+    void testGetActiveContractsTotal_shouldReturnTotal_whenClientExists() throws Exception {
+        long clientId = 1L;
+
+        // Mock : le client existe
+        when(clientService.getClient(clientId)).thenReturn(Optional.of(new Person()));
+        when(clientService.getActiveContractsTotal(clientId)).thenReturn(1250.75);
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/active/total", clientId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.clientId").value(clientId))
+                .andExpect(jsonPath("$.totalActiveContractsCost").value(1250.75));
+    }
+
+
+    @Test
+    @DisplayName("⚪ doit retourner 0.0 si le client existe mais n’a aucun contrat actif")
+    void testGetActiveContractsTotal_shouldReturnZero_whenNoActiveContracts() throws Exception {
+        long clientId = 2L;
+
+        // Mock : le client existe mais aucun contrat actif
+        when(clientService.getClient(clientId)).thenReturn(Optional.of(new Person()));
+        when(clientService.getActiveContractsTotal(clientId)).thenReturn(0.0);
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/active/total", clientId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.clientId").value(clientId))
+                .andExpect(jsonPath("$.totalActiveContractsCost").value(0.0));
+    }
+
+
+    @Test
+    @DisplayName("❌ doit retourner 404 si le client n’existe pas")
+    void testGetActiveContractsTotal_shouldReturn404_whenClientNotFound() throws Exception {
+        long clientId = 999L;
+
+        // Mock : client inexistant
+        when(clientService.getClient(clientId)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/active/total", clientId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Client not found"));
+    }
+
+
+    @Test
+    @DisplayName("🔥 doit retourner 500 si une erreur interne survient")
+    void testGetActiveContractsTotal_shouldReturn500_whenInternalErrorOccurs() throws Exception {
+        long clientId = 3L;
+
+        // Mock : exception simulée
+        when(clientService.getClient(clientId)).thenThrow(new RuntimeException("Unexpected error"));
+
+        mockMvc.perform(get("/api/clients/{id}/contracts/active/total", clientId))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value("Unexpected error"));
+    }
+
 }
+
+
+
