@@ -111,7 +111,7 @@ curl -X PUT "http://localhost:8080/api/contracts/10/updateCost?updatedCost=2000"
 ### ❌ Suppression d’un client et clôture automatique de ses contrats :
 
 ```bash
-curl -X DELETE http://localhost:8080/api/clients/1
+curl -X DELETE http://localhost:8080/api/clients/delete/1
 ```
 
 ---
