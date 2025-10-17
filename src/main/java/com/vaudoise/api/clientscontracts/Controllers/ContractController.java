@@ -1,8 +1,10 @@
 package com.vaudoise.api.clientscontracts.Controllers;
 
 import java.util.Collections;
+import java.util.Map;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,19 +29,19 @@ public class ContractController {
         this.modelMapper = modelMapper;
     }
     
-    @PostMapping("/client/{idClient}")
+    @PostMapping("/client/{id}")
     public ResponseEntity<?> createContract(@PathVariable("id") long idClient, @RequestBody Contract contract) {
     	try {
     		Contract createdContract = this.contractService.createContract(idClient, contract);
-    		return ResponseEntity.status(201).body(createdContract);
+    		return ResponseEntity.status(HttpStatus.CREATED).body(createdContract);
     		
     	}
     	catch (RuntimeException e) {
     		if (e.getMessage().contains("Client not found")) {
-    			return ResponseEntity.status(404).body(Collections.singletonMap("message", "Client not found"));
+    			return ResponseEntity.status(404).body(Map.of("message", "Client not found"));
     		}
     		else {
-    			return ResponseEntity.internalServerError().body(Collections.singletonMap("Internal error: ", e.getMessage()));
+    			return ResponseEntity.internalServerError().body(Map.of("message", "Internal error: Unexpected error"));
     		}
     	}
     }
